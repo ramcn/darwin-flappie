@@ -31,9 +31,6 @@ LIBS :=
 # Compiler.
 CC := g++ 
 
-# OpenCL compile and link flags.
-AOCL_COMPILE_CONFIG := $(shell aocl compile-config)
-AOCL_LINK_CONFIG := $(shell aocl link-config)
 
 # Compilation flags
 #ifeq ($(DEBUG),1)
@@ -47,7 +44,7 @@ all : $(TARGET_DIR)/$(TARGET)
 $(TARGET_DIR)/$(TARGET) : Makefile $(SRCS) $(INC_FILES)
 	@[ -d $(TARGET_DIR) ] || mkdir $(TARGET_DIR)
 	$(ECHO)$(CC) $(CXXFLAGS) -fPIC $(foreach D,$(INC_DIRS),-I$D) \
-			$(AOCL_COMPILE_CONFIG) $(SRCS) $(AOCL_LINK_CONFIG) \
+			$(SRCS) \
 			$(foreach D,$(LIB_DIRS),-L$D) \
 			$(foreach L,$(LIBS),-l$L) -lpthread \
 			-o $(TARGET_DIR)/$(TARGET)
