@@ -16,8 +16,10 @@ TARGET := darwin-xl
 # Directories.
 HOST_DIR := host
 TARGET_DIR := ./
-INC_DIRS := ./ ./common/inc
-LIB_DIRS := ./common/lib:/opt/glibc-2.14/lib
+#INC_DIRS := ./ ./common/inc
+#LIB_DIRS := ./common/lib:/opt/glibc-2.14/lib
+INC_DIRS := ./
+LIB_DIRS := 
 
 # All include files.
 INC_FILES := $(foreach D,$(INC_DIRS),$(wildcard $D/*.h))
@@ -34,7 +36,7 @@ CC := g++
 
 # Compilation flags
 #ifeq ($(DEBUG),1)
-CXXFLAGS += -g  -std=c++11 -L/opt/glibc-2.14/lib
+CXXFLAGS += -g  -std=c++11 
 #endif
 
 # Make it all!
