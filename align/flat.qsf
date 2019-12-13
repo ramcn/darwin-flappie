@@ -1,0 +1,305 @@
+# (C) 1992-2017 Intel Corporation.                            
+# Intel, the Intel logo, Intel, MegaCore, NIOS II, Quartus and TalkBack words    
+# and logos are trademarks of Intel Corporation or its subsidiaries in the U.S.  
+# and/or other countries. Other marks and brands may be claimed as the property  
+# of others. See Trademarks on intel.com for full list of Intel trademarks or    
+# the Trademarks & Brands Names Database (if Intel) or See www.Intel.com/legal (if Altera) 
+# Your use of Intel Corporation's design tools, logic functions and other        
+# software and tools, and its AMPP partner logic functions, and any output       
+# files any of the foregoing (including device programming or simulation         
+# files), and any associated documentation or information are expressly subject  
+# to the terms and conditions of the Altera Program License Subscription         
+# Agreement, Intel MegaCore Function License Agreement, or other applicable      
+# license agreement, including, without limitation, that your use is for the     
+# sole purpose of programming logic devices manufactured by Intel and sold by    
+# Intel or its authorized distributors.  Please refer to the applicable          
+# agreement for further details.                                                 
+
+
+#============================================================
+# Files and basic settings
+#============================================================
+set_global_assignment -name TOP_LEVEL_ENTITY "top"
+set_global_assignment -name VERILOG_INPUT_VERSION SYSTEMVERILOG_2005
+
+#set_global_assignment -name QIP_FILE board/board.qip
+#set_global_assignment -name QIP_FILE kernel_system/kernel_system.qip
+#set_global_assignment -name VERILOG_FILE top.v
+#set_global_assignment -name VERILOG_FILE ip/freeze_wrapper.v
+
+
+set_global_assignment -name INI_VARS "FORCE_MSF_WRITE=ON"
+
+# The file opencl_bsp_ip.qsf contains all necessary Verilog and Qsys IP files
+# top.v, ip/freeze_wrapper.v are used for all compile revisions
+# for flat and base revision compiles board.qsys and kernel_system.qsys are generated
+# and the resulting .ip files are appended to this file
+# for top revision compiles only kernel_system.qsys is generated, while
+# the compile flow itself imports a post-fit netlist of board.qsys from the base
+# revision compile and does not require the sources
+
+source opencl_bsp_ip.qsf
+set_global_assignment -name SDC_FILE top.sdc
+# Execute the pre/post CAD flow
+#set_global_assignment -name PRE_FLOW_SCRIPT_FILE "quartus_sh:scripts/pre_flow_pr.tcl"
+set_global_assignment -name POST_FLOW_SCRIPT_FILE "quartus_cdb:scripts/post_flow_pr.tcl"
+
+# Enable QHD 
+set_global_assignment -name QHD_MODE ON
+
+#============================================================
+# Revision Specific Settings
+#============================================================
+set_global_assignment -name AUTO_GLOBAL_CLOCK OFF
+set_global_assignment -name AUTO_GLOBAL_REGISTER_CONTROLS OFF
+
+# Clocks
+set_instance_assignment -name GLOBAL_SIGNAL GLOBAL_CLOCK -to fpga_clk_100
+set_instance_assignment -name GLOBAL_SIGNAL GLOBAL_CLOCK -to board_inst|kernel_clk_gen|kernel_pll|altera_pll_i|twentynm_pll|outclk[0]
+set_instance_assignment -name GLOBAL_SIGNAL GLOBAL_CLOCK -to board_inst|kernel_clk_gen|kernel_pll|altera_pll_i|twentynm_pll|outclk[1]
+
+# Resets
+set_instance_assignment -name GLOBAL_SIGNAL GLOBAL_CLOCK -to freeze_wrapper_inst|kernel_system_clock_reset_reset_reset_n
+
+# This setting indicates that the global signal will be frozen high during PR by user logic (implemented in the freeze_wrapper)
+set_instance_assignment -name PR_ALLOW_GLOBAL_LIMS ON -to freeze_wrapper_inst|kernel_system_clock_reset_reset_reset_n
+
+#============================================================
+# Synthesis and Fitter Fine-Tuning
+#============================================================
+set_global_assignment -name FITTER_EFFORT "STANDARD FIT"
+set_global_assignment -name FIT_ONLY_ONE_ATTEMPT ON
+set_global_assignment -name PLACEMENT_EFFORT_MULTIPLIER 4.0
+set_global_assignment -name ROUTER_TIMING_OPTIMIZATION_LEVEL MAXIMUM
+set_global_assignment -name OPTIMIZE_HOLD_TIMING "ALL PATHS"
+set_global_assignment -name OPTIMIZATION_TECHNIQUE SPEED
+set_global_assignment -name ALLOW_SHIFT_REGISTER_MERGING_ACROSS_HIERARCHIES OFF
+set_global_assignment -name DISABLE_REGISTER_MERGING_ACROSS_HIERARCHIES ON
+set_global_assignment -name LAST_QUARTUS_VERSION "16.1.0"
+set_instance_assignment -name AUTO_SHIFT_REGISTER_RECOGNITION OFF -to board_inst|*pipe_stage_*
+set_global_assignment -name ENABLE_PR_PINS OFF
+set_global_assignment -name ENABLE_INIT_DONE_OUTPUT OFF
+#============================================================
+# End of original settings
+#============================================================
+
+#============================================================
+# Board settings
+#============================================================
+
+#############################################################
+# Device
+#############################################################
+set_global_assignment -name FAMILY "Arria 10"
+set_global_assignment -name DEVICE 10AS066N3F40E2SG
+set_global_assignment -name MIN_CORE_JUNCTION_TEMP 0
+set_global_assignment -name MAX_CORE_JUNCTION_TEMP 100
+set_global_assignment -name STRATIX_DEVICE_IO_STANDARD "1.8 V"
+set_global_assignment -name INI_VARS "ASM_ENABLE_ADVANCED_DEVICES=ON"
+#############################################################
+# Misc
+#############################################################
+# Power model
+set_global_assignment -name POWER_PRESET_COOLING_SOLUTION "23 MM HEAT SINK WITH 200 LFPM AIRFLOW"
+set_global_assignment -name POWER_BOARD_THERMAL_MODEL "NONE (CONSERVATIVE)"
+
+# Programming file generation
+set_global_assignment -name GENERATE_RBF_FILE ON
+set_global_assignment -name ON_CHIP_BITSTREAM_DECOMPRESSION OFF
+
+# I/O Configuration
+set_global_assignment -name OUTPUT_IO_TIMING_NEAR_END_VMEAS "HALF VCCIO" -rise
+set_global_assignment -name OUTPUT_IO_TIMING_NEAR_END_VMEAS "HALF VCCIO" -fall
+set_global_assignment -name OUTPUT_IO_TIMING_FAR_END_VMEAS "HALF SIGNAL SWING" -rise
+set_global_assignment -name OUTPUT_IO_TIMING_FAR_END_VMEAS "HALF SIGNAL SWING" -fall
+set_global_assignment -name ACTIVE_SERIAL_CLOCK FREQ_100MHZ
+
+#############################################################
+# Pinouts
+#############################################################
+## Clocks
+set_location_assignment PIN_AM10 -to clk_fpga_b2_p
+set_location_assignment PIN_AG29 -to clk_enet_fpga_p
+set_location_assignment PIN_G29 -to refclk_dp_p
+
+set_instance_assignment -name INPUT_TERMINATION DIFFERENTIAL -to clk_fpga_b2_p
+set_instance_assignment -name IO_STANDARD LVDS -to clk_fpga_b2_p
+set_instance_assignment -name IO_STANDARD LVDS -to clk_enet_fpga_p
+set_instance_assignment -name IO_STANDARD LVDS -to refclk_dp_p
+
+set_location_assignment PIN_AP20 -to fpga_clk_100
+set_location_assignment PIN_AV21 -to fpga_reset_n
+set_location_assignment PIN_AR23 -to fpga_led_pio[0]
+set_location_assignment PIN_AR22 -to fpga_led_pio[1]
+set_location_assignment PIN_AM21 -to fpga_led_pio[2]
+set_location_assignment PIN_AL20 -to fpga_led_pio[3]
+set_location_assignment PIN_P3 -to fpga_dipsw_pio[0]
+set_location_assignment PIN_P4 -to fpga_dipsw_pio[1]
+set_location_assignment PIN_P1 -to fpga_dipsw_pio[2]
+set_location_assignment PIN_R1 -to fpga_dipsw_pio[3]
+set_location_assignment PIN_R5 -to fpga_button_pio[0]
+set_location_assignment PIN_T5 -to fpga_button_pio[1]
+set_location_assignment PIN_P5 -to fpga_button_pio[2]
+set_location_assignment PIN_P6 -to fpga_button_pio[3]
+set_location_assignment PIN_F25 -to emif_ref_clk
+set_location_assignment PIN_G24 -to "emif_ref_clk(n)"
+set_location_assignment PIN_E26 -to hps_memory_oct_rzqin
+set_instance_assignment -name IO_STANDARD LVDS -to emif_ref_clk
+set_instance_assignment -name IO_STANDARD LVDS -to "emif_ref_clk(n)"
+set_location_assignment PIN_AG24 -to hps_memory_mem_alert_n
+set_location_assignment PIN_AV22 -to emif_uart_txd
+set_location_assignment PIN_AU21 -to emif_uart_rxd
+set_instance_assignment -name IO_STANDARD "1.8 V" -to fpga_clk_100
+set_instance_assignment -name IO_STANDARD "1.8 V" -to fpga_reset_n
+set_instance_assignment -name IO_STANDARD "1.8 V" -to fpga_dipsw_pio[3]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to fpga_dipsw_pio[0]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to fpga_dipsw_pio[1]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to fpga_dipsw_pio[2]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to fpga_led_pio[0]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to fpga_led_pio[1]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to fpga_led_pio[2]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to fpga_led_pio[3]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to fpga_button_pio[3]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to fpga_button_pio[0]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to fpga_button_pio[1]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to fpga_button_pio[2]
+set_location_assignment PIN_AV13 -to altera_reserved_tms
+set_location_assignment PIN_AW15 -to altera_reserved_tck
+set_location_assignment PIN_AL15 -to altera_reserved_tdi
+set_location_assignment PIN_AR13 -to altera_reserved_ntrst
+set_location_assignment PIN_AW14 -to altera_reserved_tdo
+set_location_assignment PIN_H18 -to hps_emac0_TX_CLK
+set_location_assignment PIN_H19 -to hps_emac0_TX_CTL
+set_location_assignment PIN_E20 -to hps_emac0_TXD0
+set_location_assignment PIN_F20 -to hps_emac0_TXD1
+set_location_assignment PIN_F19 -to hps_emac0_TXD2
+set_location_assignment PIN_G19 -to hps_emac0_TXD3
+set_location_assignment PIN_F18 -to hps_emac0_RX_CLK
+set_location_assignment PIN_G17 -to hps_emac0_RX_CTL
+set_location_assignment PIN_G20 -to hps_emac0_RXD0
+set_location_assignment PIN_G21 -to hps_emac0_RXD1
+set_location_assignment PIN_F22 -to hps_emac0_RXD2
+set_location_assignment PIN_G22 -to hps_emac0_RXD3
+set_location_assignment PIN_K20 -to hps_emac0_MDC
+set_location_assignment PIN_K21 -to hps_emac0_MDIO
+set_location_assignment PIN_K16 -to hps_sdio_CLK
+set_location_assignment PIN_H16 -to hps_sdio_CMD
+set_location_assignment PIN_E16 -to hps_sdio_D0
+set_location_assignment PIN_G16 -to hps_sdio_D1
+set_location_assignment PIN_H17 -to hps_sdio_D2
+set_location_assignment PIN_F15 -to hps_sdio_D3
+set_location_assignment PIN_M19 -to hps_sdio_D4
+set_location_assignment PIN_E15 -to hps_sdio_D5
+set_location_assignment PIN_J16 -to hps_sdio_D6
+set_location_assignment PIN_L18 -to hps_sdio_D7
+set_location_assignment PIN_L17 -to hps_sdio_PWR_ENA
+set_location_assignment PIN_D18 -to hps_usb0_CLK
+set_location_assignment PIN_C19 -to hps_usb0_DIR
+set_location_assignment PIN_F17 -to hps_usb0_NXT
+set_location_assignment PIN_E18 -to hps_usb0_STP
+set_location_assignment PIN_D19 -to hps_usb0_D0
+set_location_assignment PIN_E17 -to hps_usb0_D1
+set_location_assignment PIN_C17 -to hps_usb0_D2
+set_location_assignment PIN_C18 -to hps_usb0_D3
+set_location_assignment PIN_D21 -to hps_usb0_D4
+set_location_assignment PIN_D20 -to hps_usb0_D5
+set_location_assignment PIN_E21 -to hps_usb0_D6
+set_location_assignment PIN_E22 -to hps_usb0_D7
+set_location_assignment PIN_K18 -to hps_spim1_CLK
+set_location_assignment PIN_L19 -to hps_spim1_MOSI
+set_location_assignment PIN_H22 -to hps_spim1_MISO
+set_location_assignment PIN_H21 -to hps_spim1_SS0_N
+set_location_assignment PIN_J21 -to hps_spim1_SS1_N
+set_location_assignment PIN_M17 -to hps_uart1_TX
+set_location_assignment PIN_K17 -to hps_uart1_RX
+set_location_assignment PIN_L20 -to hps_i2c1_SDA
+set_location_assignment PIN_M20 -to hps_i2c1_SCL
+set_location_assignment PIN_J20 -to hps_gpio_GPIO05
+set_location_assignment PIN_N20 -to hps_gpio_GPIO14
+set_location_assignment PIN_K23 -to hps_gpio_GPIO16
+set_location_assignment PIN_L23 -to hps_gpio_GPIO17
+set_location_assignment PIN_P20 -to hps_trace_CLK
+set_location_assignment PIN_K22 -to hps_trace_D0
+set_location_assignment PIN_L22 -to hps_trace_D1
+set_location_assignment PIN_M22 -to hps_trace_D2
+set_location_assignment PIN_M21 -to hps_trace_D3
+set_instance_assignment -name IO_STANDARD "1.8 V" -to hps_sdio_CLK
+set_instance_assignment -name IO_STANDARD "1.8 V" -to hps_sdio_CMD
+set_instance_assignment -name IO_STANDARD "1.8 V" -to hps_sdio_D0
+set_instance_assignment -name IO_STANDARD "1.8 V" -to hps_sdio_D1
+set_instance_assignment -name IO_STANDARD "1.8 V" -to hps_sdio_D2
+set_instance_assignment -name IO_STANDARD "1.8 V" -to hps_sdio_D3
+set_instance_assignment -name IO_STANDARD "1.8 V" -to hps_sdio_D4
+set_instance_assignment -name IO_STANDARD "1.8 V" -to hps_sdio_D5
+set_instance_assignment -name IO_STANDARD "1.8 V" -to hps_sdio_D6
+set_instance_assignment -name IO_STANDARD "1.8 V" -to hps_sdio_D7
+set_instance_assignment -name IO_STANDARD "1.8 V" -to hps_sdio_PWR_ENA
+set_instance_assignment -name IO_STANDARD "1.8 V" -to hps_emac0_TX_CLK
+set_instance_assignment -name IO_STANDARD "1.8 V" -to hps_emac0_TX_CTL
+set_instance_assignment -name IO_STANDARD "1.8 V" -to hps_emac0_TXD0
+set_instance_assignment -name IO_STANDARD "1.8 V" -to hps_emac0_TXD1
+set_instance_assignment -name IO_STANDARD "1.8 V" -to hps_emac0_TXD2
+set_instance_assignment -name IO_STANDARD "1.8 V" -to hps_emac0_TXD3
+set_instance_assignment -name IO_STANDARD "1.8 V" -to hps_emac0_RX_CLK
+set_instance_assignment -name IO_STANDARD "1.8 V" -to hps_emac0_RX_CTL
+set_instance_assignment -name IO_STANDARD "1.8 V" -to hps_emac0_RXD0
+set_instance_assignment -name IO_STANDARD "1.8 V" -to hps_emac0_RXD1
+set_instance_assignment -name IO_STANDARD "1.8 V" -to hps_emac0_RXD2
+set_instance_assignment -name IO_STANDARD "1.8 V" -to hps_emac0_RXD3
+set_instance_assignment -name IO_STANDARD "1.8 V" -to hps_emac0_MDC
+set_instance_assignment -name IO_STANDARD "1.8 V" -to hps_emac0_MDIO
+set_instance_assignment -name IO_STANDARD "1.8 V" -to hps_spim1_CLK
+set_instance_assignment -name IO_STANDARD "1.8 V" -to hps_spim1_MOSI
+set_instance_assignment -name IO_STANDARD "1.8 V" -to hps_spim1_MISO
+set_instance_assignment -name IO_STANDARD "1.8 V" -to hps_spim1_SS0_N
+set_instance_assignment -name IO_STANDARD "1.8 V" -to hps_spim1_SS1_N
+set_instance_assignment -name IO_STANDARD "1.8 V" -to hps_uart1_TX
+set_instance_assignment -name IO_STANDARD "1.8 V" -to hps_uart1_RX
+set_instance_assignment -name IO_STANDARD "1.8 V" -to hps_usb0_CLK
+set_instance_assignment -name IO_STANDARD "1.8 V" -to hps_usb0_DIR
+set_instance_assignment -name IO_STANDARD "1.8 V" -to hps_usb0_NXT
+set_instance_assignment -name IO_STANDARD "1.8 V" -to hps_usb0_STP
+set_instance_assignment -name IO_STANDARD "1.8 V" -to hps_usb0_D0
+set_instance_assignment -name IO_STANDARD "1.8 V" -to hps_usb0_D1
+set_instance_assignment -name IO_STANDARD "1.8 V" -to hps_usb0_D2
+set_instance_assignment -name IO_STANDARD "1.8 V" -to hps_usb0_D3
+set_instance_assignment -name IO_STANDARD "1.8 V" -to hps_usb0_D4
+set_instance_assignment -name IO_STANDARD "1.8 V" -to hps_usb0_D5
+set_instance_assignment -name IO_STANDARD "1.8 V" -to hps_usb0_D6
+set_instance_assignment -name IO_STANDARD "1.8 V" -to hps_usb0_D7
+set_instance_assignment -name IO_STANDARD "1.8 V" -to hps_i2c1_SDA
+set_instance_assignment -name IO_STANDARD "1.8 V" -to hps_i2c1_SCL
+set_instance_assignment -name IO_STANDARD "1.8 V" -to hps_gpio_GPIO05
+set_instance_assignment -name IO_STANDARD "1.8 V" -to hps_gpio_GPIO14
+set_instance_assignment -name IO_STANDARD "1.8 V" -to hps_gpio_GPIO16
+set_instance_assignment -name IO_STANDARD "1.8 V" -to hps_gpio_GPIO17
+set_instance_assignment -name IO_STANDARD "1.8 V" -to hps_trace_CLK
+set_instance_assignment -name IO_STANDARD "1.8 V" -to hps_trace_D0
+set_instance_assignment -name IO_STANDARD "1.8 V" -to hps_trace_D1
+set_instance_assignment -name IO_STANDARD "1.8 V" -to hps_trace_D2
+set_instance_assignment -name IO_STANDARD "1.8 V" -to hps_trace_D3
+set_instance_assignment -name CURRENT_STRENGTH_NEW "MAXIMUM CURRENT" -to hps_sdio_CLK
+set_instance_assignment -name CURRENT_STRENGTH_NEW "MAXIMUM CURRENT" -to hps_sdio_CMD
+set_instance_assignment -name CURRENT_STRENGTH_NEW "MAXIMUM CURRENT" -to hps_sdio_D0
+set_instance_assignment -name CURRENT_STRENGTH_NEW "MAXIMUM CURRENT" -to hps_sdio_D1
+set_instance_assignment -name CURRENT_STRENGTH_NEW "MAXIMUM CURRENT" -to hps_sdio_D2
+set_instance_assignment -name CURRENT_STRENGTH_NEW "MAXIMUM CURRENT" -to hps_sdio_D3
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to hps_sdio_D4
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to hps_sdio_D5
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to hps_sdio_D6
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to hps_sdio_D7
+set_instance_assignment -name CURRENT_STRENGTH_NEW "MAXIMUM CURRENT" -to hps_sdio_PWR_ENA
+set_instance_assignment -name SLEW_RATE 1 -to hps_sdio_CLK
+set_instance_assignment -name SLEW_RATE 1 -to hps_sdio_CMD
+set_instance_assignment -name SLEW_RATE 1 -to hps_sdio_D0
+set_instance_assignment -name SLEW_RATE 1 -to hps_sdio_D1
+set_instance_assignment -name SLEW_RATE 1 -to hps_sdio_D2
+set_instance_assignment -name SLEW_RATE 1 -to hps_sdio_D3
+set_instance_assignment -name SLEW_RATE 1 -to hps_sdio_PWR_ENA
+set_instance_assignment -name OUTPUT_DELAY_CHAIN 8 -to hps_emac0_TX_CLK
+
+set_global_assignment -name SOURCE_TCL_SCRIPT_FILE ip_include.tcl
+
+set_instance_assignment -name AUTO_SHIFT_REGISTER_RECOGNITION OFF -to *_NO_SHIFT_REG*
+
+set_global_assignment -name VERILOG_CONSTANT_LOOP_LIMIT 10000
